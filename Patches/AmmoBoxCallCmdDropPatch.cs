@@ -1,40 +1,37 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection.Emit;
-using System.Text;
-using System.Threading.Tasks;
-using HarmonyLib;
-using NorthwoodLib.Pools;
-using static HarmonyLib.AccessTools;
-
-namespace AntiLag.Patches
+﻿namespace AntiLag.Patches
 {
-	[HarmonyPatch(typeof(AmmoBox), nameof(AmmoBox.CallCmdDrop))]
-	class AmmoBoxCallCmdDropPatch
-	{
-		public static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator generator)
-		{
-			var newInstructions = ListPool<CodeInstruction>.Shared.Rent(instructions);
+    using HarmonyLib;
+    using NorthwoodLib.Pools;
+    using System.Collections.Generic;
+    using System.Reflection.Emit;
+    using static HarmonyLib.AccessTools;
 
-			var pickup = generator.DeclareLocal(typeof(Pickup));
+    [HarmonyPatch(typeof(AmmoBox), nameof(AmmoBox.CallCmdDrop))]
+    internal static class AmmoBoxCallCmdDropPatch
+    {
+        private static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions,
+            ILGenerator generator)
+        {
+            var newInstructions = ListPool<CodeInstruction>.Shared.Rent(instructions);
 
-			newInstructions.RemoveRange(newInstructions.Count - 2, 2);
+            var pickup = generator.DeclareLocal(typeof(Pickup));
 
-			newInstructions.AddRange(new CodeInstruction[] 
-			{
-				new CodeInstruction(OpCodes.Stloc_0, pickup.LocalIndex),
-				new CodeInstruction(OpCodes.Ldsfld, Field(typeof(Plugin), nameof(Plugin.Instance))),
-				new CodeInstruction(OpCodes.Callvirt, PropertyGetter(typeof(Plugin), nameof(Plugin.player))),
-				new CodeInstruction(OpCodes.Ldloc_0, pickup.LocalIndex),
-				new CodeInstruction(OpCodes.Callvirt, Method(typeof(Handlers.Player), nameof(Handlers.Player.AmmoDropped))),
-				new CodeInstruction(OpCodes.Ret)
-			});
+            newInstructions.RemoveRange(newInstructions.Count - 2, 2);
 
-			foreach (CodeInstruction code in newInstructions)
-				yield return code;
+            newInstructions.AddRange(new[]
+            {
+                new CodeInstruction(OpCodes.Stloc_0, pickup.LocalIndex),
+                new CodeInstruction(OpCodes.Ldsfld, Field(typeof(Plugin), nameof(Plugin.Instance))),
+                new CodeInstruction(OpCodes.Callvirt, PropertyGetter(typeof(Plugin), nameof(Plugin.PlayerEvents))),
+                new CodeInstruction(OpCodes.Ldloc_0, pickup.LocalIndex),
+                new CodeInstruction(OpCodes.Callvirt, Method(typeof(Handlers.Player), nameof(Handlers.Player.AmmoDropped))),
+                new CodeInstruction(OpCodes.Ret)
+            });
 
-			ListPool<CodeInstruction>.Shared.Return(newInstructions);
-		}
-	}
+            foreach (CodeInstruction code in newInstructions)
+                yield return code;
+
+            ListPool<CodeInstruction>.Shared.Return(newInstructions);
+        }
+    }
 }

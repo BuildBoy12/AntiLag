@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Exiled.API.Interfaces;
-
-namespace AntiLag
+﻿namespace AntiLag
 {
-	public sealed class Config : IConfig
-	{
-		public bool IsEnabled { get; set; } = true;
+    using Exiled.API.Interfaces;
 
-		public int MaxAmmoStackSize { get; set; } = 160;
-	}
+    public sealed class Config : IConfig
+    {
+        public bool IsEnabled { get; set; } = true;
+        public int MaxAmmoStackSize { get; set; } = 160;
+    }
 }
